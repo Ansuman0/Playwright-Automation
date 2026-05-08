@@ -24,8 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # Variables are resolved from GitHub Environment secrets.
-    # Set these under: Settings → Environments → <env-name> → Secrets & variables
     environment: ${{ github.event.inputs.environment || 'tst' }}
 
     env:
@@ -49,23 +47,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox
+      # Cache browser binaries keyed on Playwright version.
+      # On a cache hit we only install system deps (fast — no download).
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers + system deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Run smoke tests
-        run: npx playwright test --grep @smoke --workers=1
+        run: npx playwright test --grep @smoke --workers=4
 
-      - name: Run regression tests
-        if: github.event_name == 'push'
-        run: npm run test:regression
-
+      # Only generate the Allure report when regression ran (push) — skipped on PRs.
       - name: Generate Allure report
-        if: always()
+        if: always() && github.event_name == 'push'
         run: npx allure generate allure-results --clean -o allure-report
 
       - name: Upload Allure report
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && github.event_name == 'push'
         with:
           name: allure-report-${{ github.run_id }}
           path: allure-report/

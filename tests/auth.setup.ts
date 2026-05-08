@@ -10,11 +10,11 @@ const log = getLogger('auth.setup');
 
 setup('authenticate via Auth0', async ({ page }) => {
   log.info('=== Auth setup started ===');
-  log.info(`BASE_URL    : ${config.baseUrl}`);
-  log.info(`TEST_USERNAME: ${config.username || '(empty — check .env)'}`);
-  log.info(`AUTH0_DOMAIN : ${config.auth0Domain}`);
+  log.info(`BASE_URL      : ${config.baseUrl}`);
+  log.info(`TEST_USERNAME : ${config.username || '(empty — check .env)'}`);
+  log.info(`AUTH0_DOMAIN  : ${process.env.AUTH0_DOMAIN || '(default: auth0.com)'}`);
   log.info(`AUTH0_FRAGMENT: ${LoginPage.AUTH0_LOGIN_FRAGMENT}`);
-  log.info(`STORAGE_STATE: ${STORAGE_STATE}`);
+  log.info(`STORAGE_STATE : ${STORAGE_STATE}`);
 
   if (!config.username || !config.password) {
     log.error('TEST_USERNAME / TEST_PASSWORD missing in .env');

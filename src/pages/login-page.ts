@@ -1,6 +1,7 @@
 import { Locator } from '@playwright/test';
 import { BasePage } from './base-page';
 import { config } from '../utils/config';
+import { AuthRoutes } from '../utils/routes';
 
 /**
  * Auth0 Universal Login.
@@ -13,7 +14,8 @@ import { config } from '../utils/config';
  * AUTH0_DOMAIN is read from the environment (default: auth0.com).
  */
 export class LoginPage extends BasePage {
-  static readonly AUTH0_LOGIN_FRAGMENT = `${config.auth0Domain}/u/login`;
+  private static readonly AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || 'auth0.com';
+  static readonly AUTH0_LOGIN_FRAGMENT = `${LoginPage.AUTH0_DOMAIN}/u/login`;
 
   // Server-side errors land in different containers across Auth0 versions —
   // cover the union, then fall back to a known-phrase text search.
@@ -61,36 +63,23 @@ export class LoginPage extends BasePage {
     ].join(', '),
   );
 
-  /** Hit the app root; the SPA bounces unauth'd users to Auth0. */
+  /** Navigate to a protected route so the SPA redirects unauthenticated users to Auth0. */
   async open(): Promise<this> {
-    await this.page.goto(config.baseUrl);
+    await this.page.goto(config.baseUrl.replace(/\/$/, '') + AuthRoutes.DASHBOARD);
     await this.waitUntilOnAuth0();
     await this.usernameInput.waitFor({ state: 'visible' });
     return this;
   }
 
   async waitUntilOnAuth0(timeout = 45_000): Promise<void> {
-    await this.page.waitForURL(
-      (u) => {
-        const url = u.toString();
-        // Match the full fragment when AUTH0_DOMAIN is explicitly configured,
-        // otherwise fall back to matching just the /u/login path so the check
-        // works with both standard auth0.com subdomains and custom domains.
-        if (config.auth0Domain && config.auth0Domain !== 'auth0.com') {
-          return url.includes(LoginPage.AUTH0_LOGIN_FRAGMENT);
-        }
-        return url.includes('/u/login');
-      },
-      { timeout, waitUntil: 'domcontentloaded' },
-    );
+    await this.page.waitForURL((u) => u.toString().includes(LoginPage.AUTH0_LOGIN_FRAGMENT), {
+      timeout,
+      waitUntil: 'domcontentloaded',
+    });
   }
 
   isOnAuth0(): boolean {
-    const url = this.page.url();
-    if (config.auth0Domain && config.auth0Domain !== 'auth0.com') {
-      return url.includes(LoginPage.AUTH0_LOGIN_FRAGMENT);
-    }
-    return url.includes('/u/login');
+    return this.page.url().includes(LoginPage.AUTH0_LOGIN_FRAGMENT);
   }
 
   async login(username: string, password: string): Promise<this> {
