@@ -9,7 +9,6 @@ export const config = {
   username: process.env.TEST_USERNAME ?? '',
   password: process.env.TEST_PASSWORD ?? '',
   timeoutMs: Number(process.env.TIMEOUT ?? '20') * 1000,
-  auth0Domain: process.env.AUTH0_DOMAIN ?? 'auth0.com',
   browser: process.env.BROWSER ?? 'chromium',
 };
 

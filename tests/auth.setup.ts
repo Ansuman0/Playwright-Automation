@@ -10,9 +10,11 @@ const log = getLogger('auth.setup');
 
 setup('authenticate via Auth0', async ({ page }) => {
   log.info('=== Auth setup started ===');
-  log.info(`BASE_URL    : ${config.baseUrl}`);
-  log.info(`TEST_USERNAME: ${config.username || '(empty — check .env)'}`);
-  log.info(`STORAGE_STATE: ${STORAGE_STATE}`);
+  log.info(`BASE_URL      : ${config.baseUrl}`);
+  log.info(`TEST_USERNAME : ${config.username || '(empty — check .env)'}`);
+  log.info(`AUTH0_DOMAIN  : ${process.env.AUTH0_DOMAIN || '(default: auth0.com)'}`);
+  log.info(`AUTH0_FRAGMENT: ${LoginPage.AUTH0_LOGIN_FRAGMENT}`);
+  log.info(`STORAGE_STATE : ${STORAGE_STATE}`);
 
   if (!config.username || !config.password) {
     log.error('TEST_USERNAME / TEST_PASSWORD missing in .env');
@@ -27,7 +29,13 @@ setup('authenticate via Auth0', async ({ page }) => {
   await setup.step('Open app and wait for Auth0 redirect', async () => {
     log.info('Navigating to app root — expecting bounce to Auth0');
     const login = new LoginPage(page);
-    await login.open();
+    try {
+      await login.open();
+    } catch (e) {
+      log.error(`Auth0 redirect failed. Current URL: ${page.url()}`);
+      log.error(`Expected URL to contain: ${LoginPage.AUTH0_LOGIN_FRAGMENT}`);
+      throw e;
+    }
     log.info(`Auth0 page URL: ${page.url()}`);
   });
 
