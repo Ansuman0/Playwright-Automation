@@ -3,6 +3,8 @@
 node_modules/
 test-results/
 reports/
+allure-results/
+allure-report/
 playwright-report/
 screenshots/
 .idea/
