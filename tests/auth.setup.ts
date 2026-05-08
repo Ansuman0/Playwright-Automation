@@ -26,31 +26,39 @@ setup('authenticate via Auth0', async ({ page }) => {
   const existsBefore = fs.existsSync(STORAGE_STATE);
   log.info(`storageState file exists before run: ${existsBefore}`);
 
-  await setup.step('Open app and wait for Auth0 redirect', async () => {
-    log.info('Navigating to app root — expecting bounce to Auth0');
+  let needsLogin = true;
+
+  await setup.step('Open app and detect auth state', async () => {
+    log.info('Navigating to app — detecting Auth0 redirect vs silent SSO');
     const login = new LoginPage(page);
     try {
-      await login.open();
+      needsLogin = await login.openForSetup();
     } catch (e) {
-      log.error(`Auth0 redirect failed. Current URL: ${page.url()}`);
-      log.error(`Expected URL to contain: ${LoginPage.AUTH0_LOGIN_FRAGMENT}`);
+      log.error(`Navigation timed out. Current URL: ${page.url()}`);
+      log.error(`Expected either Auth0 (${LoginPage.AUTH0_LOGIN_FRAGMENT}) or dashboard`);
       throw e;
     }
-    log.info(`Auth0 page URL: ${page.url()}`);
+    if (needsLogin) {
+      log.info(`Auth0 login page reached: ${page.url()}`);
+    } else {
+      log.info(`Already authenticated (silent SSO / env bypass) — URL: ${page.url()}`);
+    }
   });
 
-  await setup.step('Enter credentials and submit', async () => {
-    log.info(`Filling credentials for: ${config.username}`);
-    const login = new LoginPage(page);
-    await login.login(config.username, config.password);
-    log.info('Credentials submitted — waiting for Auth0 redirect back to app');
-  });
+  if (needsLogin) {
+    await setup.step('Enter credentials and submit', async () => {
+      log.info(`Filling credentials for: ${config.username}`);
+      const login = new LoginPage(page);
+      await login.login(config.username, config.password);
+      log.info('Credentials submitted — waiting for Auth0 redirect back to app');
+    });
 
-  await setup.step('Wait for redirect back to app', async () => {
-    const login = new LoginPage(page);
-    await login.waitForRedirectBack();
-    log.info(`Redirect complete — URL: ${page.url()}`);
-  });
+    await setup.step('Wait for redirect back to app', async () => {
+      const login = new LoginPage(page);
+      await login.waitForRedirectBack();
+      log.info(`Redirect complete — URL: ${page.url()}`);
+    });
+  }
 
   await setup.step('Verify dashboard loaded', async () => {
     const dashboard = new DashboardPage(page);
