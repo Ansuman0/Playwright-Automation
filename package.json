@@ -12,6 +12,7 @@
     "test:firefox": "playwright test --project=firefox",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report reports/html",
+    "report:allure": "npx allure generate allure-results --clean -o allure-report && npx allure open allure-report",
     "report:latest": "node -e \"const fs=require('fs'),p='reports/html';const dirs=fs.readdirSync(p).filter(d=>fs.statSync(p+'/'+d).isDirectory()).sort();if(!dirs.length){console.error('No reports found');process.exit(1);}require('child_process').execSync('npx playwright show-report '+p+'/'+dirs[dirs.length-1],{stdio:'inherit'})\"",
     "report:advanced": "node -e \"const fs=require('fs'),path=require('path'),{exec}=require('child_process'),p='reports/advanced/latest/index.html';if(!fs.existsSync(p)){console.error('No advanced report found — run tests first');process.exit(1);}const abs=path.resolve(p);console.log('Opening: '+abs);exec(process.platform==='win32'?'start \\\"\\\" \\\"'+abs+'\\\"':process.platform==='darwin'?'open \\\"'+abs+'\\\"':'xdg-open \\\"'+abs+'\\\"')\"",
     "report:kpi": "node -e \"const fs=require('fs'),p='reports/kpi';const dirs=fs.readdirSync(p).filter(d=>fs.statSync(p+'/'+d).isDirectory()).sort();if(!dirs.length){console.error('No KPI reports');process.exit(1);}console.log(fs.readFileSync(p+'/'+dirs[dirs.length-1]+'/summary.md','utf8'))\"",
@@ -21,6 +22,8 @@
   "devDependencies": {
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.10.0",
+    "allure-commandline": "^2.30.0",
+    "allure-playwright": "^3.1.0",
     "dotenv": "^16.4.5",
     "typescript": "^5.6.0"
   }

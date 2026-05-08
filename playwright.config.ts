@@ -36,6 +36,7 @@ export default defineConfig({
     ['list'],
     ['html', { outputFolder: `reports/html/${RUN_TS}`, open: 'never' }],
     ['json', { outputFile: `reports/json/${RUN_TS}/results.json` }],
+    ['allure-playwright', { outputFolder: 'allure-results', detail: true, suiteTitle: true }],
     ['./src/reporters/kpi-reporter.ts',  { outputFile: `reports/kpi/${RUN_TS}/summary.md` }],
     ['./src/reporters/html-reporter.ts', { outputDir: `reports/advanced/${RUN_TS}`, autoOpen: true }],
   ],
@@ -49,10 +50,10 @@ export default defineConfig({
     // viewport: null lets Playwright use the real OS window size instead of a
     // fixed resolution. Combined with --start-maximized on Chromium this gives
     // a truly full-screen window; on Firefox/WebKit it opens at the system default.
-    viewport: null,
+    viewport: process.env.CI ? { width: 1920, height: 1080 } : null,
     launchOptions: {
       args: [
-        '--start-maximized',                      // Chromium only; ignored by Firefox/WebKit
+        ...(!process.env.CI ? ['--start-maximized'] : []),
         '--disable-blink-features=AutomationControlled',
       ],
     },
@@ -71,7 +72,7 @@ export default defineConfig({
         name: 'chromium',
         use: {
           ...devices['Desktop Chrome'],
-          viewport: null,
+          viewport: process.env.CI ? { width: 1920, height: 1080 } : null,
           deviceScaleFactor: undefined,
           storageState: STORAGE_STATE,
         },
@@ -82,7 +83,7 @@ export default defineConfig({
         name: 'firefox',
         use: {
           ...devices['Desktop Firefox'],
-          viewport: null,
+          viewport: process.env.CI ? { width: 1920, height: 1080 } : null,
           deviceScaleFactor: undefined,
           storageState: STORAGE_STATE,
         },
@@ -96,7 +97,7 @@ export default defineConfig({
       name: 'no-auth',
       use: {
         ...selectedDevice,
-        viewport: null,
+        viewport: process.env.CI ? { width: 1920, height: 1080 } : null,
         deviceScaleFactor: undefined,
       },
       testMatch: ['**/login.spec.ts', '**/forgot-password.spec.ts'],
