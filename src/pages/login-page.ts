@@ -70,14 +70,27 @@ export class LoginPage extends BasePage {
   }
 
   async waitUntilOnAuth0(timeout = 45_000): Promise<void> {
-    await this.page.waitForURL((u) => u.toString().includes(LoginPage.AUTH0_LOGIN_FRAGMENT), {
-      timeout,
-      waitUntil: 'domcontentloaded',
-    });
+    await this.page.waitForURL(
+      (u) => {
+        const url = u.toString();
+        // Match the full fragment when AUTH0_DOMAIN is explicitly configured,
+        // otherwise fall back to matching just the /u/login path so the check
+        // works with both standard auth0.com subdomains and custom domains.
+        if (config.auth0Domain && config.auth0Domain !== 'auth0.com') {
+          return url.includes(LoginPage.AUTH0_LOGIN_FRAGMENT);
+        }
+        return url.includes('/u/login');
+      },
+      { timeout, waitUntil: 'domcontentloaded' },
+    );
   }
 
   isOnAuth0(): boolean {
-    return this.page.url().includes(LoginPage.AUTH0_LOGIN_FRAGMENT);
+    const url = this.page.url();
+    if (config.auth0Domain && config.auth0Domain !== 'auth0.com') {
+      return url.includes(LoginPage.AUTH0_LOGIN_FRAGMENT);
+    }
+    return url.includes('/u/login');
   }
 
   async login(username: string, password: string): Promise<this> {
