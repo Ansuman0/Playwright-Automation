@@ -1,0 +1,10 @@
+.env
+.auth/
+node_modules/
+test-results/
+reports/
+playwright-report/
+screenshots/
+.idea/
+.vscode/
+*.tsbuildinfo

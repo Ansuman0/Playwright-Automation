@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npm install --silent 2>&1)",
+      "Bash(npm install *)",
+      "Bash(./node_modules/.bin/tsc --version)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(./node_modules/.bin/playwright test *)",
+      "Bash(ls \"/c/Users/Ansuman/Desktop/Workspace/Artha/QA/User\" 2>&1 | head -40)",
+      "Read(//c/Users/Ansuman/Desktop/Workspace/Artha/QA/User/**)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Ansuman\\\\Desktop\\\\Workspace\\\\Artha\\\\QA\\\\User\\\\src\\\\\" -Directory | Select-Object Name)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Ansuman\\\\Desktop\\\\Workspace\\\\Artha\\\\QA\\\\User\\\\src\\\\core\\\\authentication\\\\logout.button.jsx\")",
+      "Bash(Select-Object -First 40)",
+      "Bash(npx tsc *)",
+      "Bash(npx playwright *)"
+    ]
+  }
+}
