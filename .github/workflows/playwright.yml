@@ -10,9 +10,10 @@ on:
       environment:
         description: Target environment
         required: true
-        default: staging
+        default: tst
         type: choice
         options:
+          - tst
           - dev
           - staging
           - production
@@ -25,7 +26,7 @@ jobs:
 
     # Variables are resolved from GitHub Environment secrets.
     # Set these under: Settings → Environments → <env-name> → Secrets & variables
-    environment: ${{ github.event.inputs.environment || 'staging' }}
+    environment: ${{ github.event.inputs.environment || 'tst' }}
 
     env:
       BASE_URL: ${{ vars.BASE_URL }}
