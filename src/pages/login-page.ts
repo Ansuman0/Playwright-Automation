@@ -71,6 +71,26 @@ export class LoginPage extends BasePage {
     return this;
   }
 
+  /**
+   * Navigate to the app and detect auth state.
+   * Returns true  → redirected to Auth0 (credentials needed).
+   * Returns false → already authenticated (silent SSO or env bypass).
+   */
+  async openForSetup(timeout = 45_000): Promise<boolean> {
+    await this.page.goto(config.baseUrl.replace(/\/$/, '') + AuthRoutes.DASHBOARD);
+    await this.page.waitForURL(
+      (u) =>
+        u.toString().includes(LoginPage.AUTH0_LOGIN_FRAGMENT) ||
+        u.toString().includes('/dashboard'),
+      { timeout, waitUntil: 'domcontentloaded' },
+    );
+    if (this.isOnAuth0()) {
+      await this.usernameInput.waitFor({ state: 'visible' });
+      return true;
+    }
+    return false;
+  }
+
   async waitUntilOnAuth0(timeout = 45_000): Promise<void> {
     await this.page.waitForURL((u) => u.toString().includes(LoginPage.AUTH0_LOGIN_FRAGMENT), {
       timeout,
