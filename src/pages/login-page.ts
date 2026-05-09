@@ -72,23 +72,34 @@ export class LoginPage extends BasePage {
   }
 
   /**
-   * Navigate to the app and detect auth state.
-   * Returns true  → redirected to Auth0 (credentials needed).
-   * Returns false → already authenticated (silent SSO or env bypass).
+   * Navigate to the app and detect auth state by waiting for real UI elements
+   * rather than URL patterns. SPAs render at /dashboard before Auth0 SDK fires,
+   * so URL checks race; element visibility is the reliable signal.
+   *
+   * Returns true  → Auth0 login form appeared (credentials needed).
+   * Returns false → Dashboard menu appeared (already authenticated).
    */
   async openForSetup(timeout = 45_000): Promise<boolean> {
     await this.page.goto(config.baseUrl.replace(/\/$/, '') + AuthRoutes.DASHBOARD);
-    await this.page.waitForURL(
-      (u) =>
-        u.toString().includes(LoginPage.AUTH0_LOGIN_FRAGMENT) ||
-        u.toString().includes('/dashboard'),
-      { timeout, waitUntil: 'domcontentloaded' },
-    );
-    if (this.isOnAuth0()) {
-      await this.usernameInput.waitFor({ state: 'visible' });
-      return true;
+
+    const dashMenu = this.page.locator("[role='menu'], .ant-menu").first();
+    const deadline = Date.now() + timeout;
+
+    while (Date.now() < deadline) {
+      const poll = Math.min(2_000, deadline - Date.now());
+      if (poll <= 0) break;
+
+      // Check both states concurrently in each poll window.
+      const [auth0Ready, dashReady] = await Promise.all([
+        this.usernameInput.waitFor({ state: 'visible', timeout: poll }).then(() => true).catch(() => false),
+        dashMenu.waitFor({ state: 'visible', timeout: poll }).then(() => true).catch(() => false),
+      ]);
+
+      if (auth0Ready) return true;   // Auth0 login form visible — needs credentials
+      if (dashReady)  return false;  // Dashboard rendered — already authenticated
     }
-    return false;
+
+    throw new Error(`Auth state undetermined after ${timeout}ms. URL: ${this.page.url()}`);
   }
 
   async waitUntilOnAuth0(timeout = 45_000): Promise<void> {
